@@ -172,16 +172,30 @@ async function search() {
   try {
     let data = null, fz = null;
 
-    // 44-ФЗ
-    const r44 = await apiFetch('/fz44/purchases?purchase_number=' + encodeURIComponent(num) + '&limit=1');
-    raw['fz44/purchases'] = r44;
-    if (r44 && r44.length) { data = r44[0]; fz = '44'; }
-
-    // 223-ФЗ
+    // 44-ФЗ: try path first, fallback to query
+    try {
+      const r44d = await apiFetch('/fz44/purchases/' + encodeURIComponent(num));
+      raw['fz44/purchases'] = r44d;
+      if (r44d && !r44d.detail) { data = r44d; fz = '44'; }
+    } catch(_){}
     if (!data) {
-      const r223 = await apiFetch('/fz223/purchases?purchase_number=' + encodeURIComponent(num) + '&limit=1');
-      raw['fz223/purchases'] = r223;
-      if (r223 && r223.length) { data = r223[0]; fz = '223'; }
+      const r44q = await apiFetch('/fz44/purchases?purchase_number=' + encodeURIComponent(num) + '&limit=1');
+      raw['fz44/purchases'] = r44q;
+      if (r44q && r44q.length) { data = r44q[0]; fz = '44'; }
+    }
+
+    // 223-ФЗ: try path first, fallback to query
+    if (!data) {
+      try {
+        const r223d = await apiFetch('/fz223/purchases/' + encodeURIComponent(num));
+        raw['fz223/purchases'] = r223d;
+        if (r223d && !r223d.detail) { data = r223d; fz = '223'; }
+      } catch(_){}
+    }
+    if (!data) {
+      const r223q = await apiFetch('/fz223/purchases?purchase_number=' + encodeURIComponent(num) + '&limit=1');
+      raw['fz223/purchases'] = r223q;
+      if (r223q && r223q.length) { data = r223q[0]; fz = '223'; }
     }
 
     if (!data) {
