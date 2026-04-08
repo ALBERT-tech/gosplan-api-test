@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ГосПлан — Карточка закупки</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e13;
+    --surface: #161922;
+    --surface2: #1c2030;
+    --border: #2a2e3d;
+    --accent: #4f8cff;
+    --accent-dim: #4f8cff22;
+    --green: #34d399;
+    --green-dim: #34d39922;
+    --orange: #fb923c;
+    --orange-dim: #fb923c22;
+    --red: #f87171;
+    --text: #e2e6f0;
+    --text2: #8b92a8;
+    --text3: #555d75;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Manrope', system-ui, sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: var(--sans); background: var(--bg); color: var(--text);
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:40px 20px;
+  }
+  .header { text-align:center; margin-bottom:36px; }
+  .header h1 {
+    font-size:28px; font-weight:800; letter-spacing:-0.5px;
+    background:linear-gradient(135deg,var(--accent),#a78bfa);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .header p { color:var(--text2); font-size:14px; margin-top:6px; }
+  .header .sub { margin-top:4px; font-size:11px; color:var(--text3); }
+  .search-box { width:100%; max-width:580px; display:flex; gap:10px; margin-bottom:32px; }
+  .search-box input {
+    flex:1; background:var(--surface); border:1.5px solid var(--border);
+    border-radius:12px; padding:14px 18px; font-family:var(--mono);
+    font-size:15px; color:var(--text); outline:none; transition:border-color .2s;
+  }
+  .search-box input::placeholder { color:var(--text3); }
+  .search-box input:focus { border-color:var(--accent); }
+  .search-box button {
+    background:var(--accent); color:#fff; border:none; border-radius:12px;
+    padding:14px 28px; font-family:var(--sans); font-weight:700; font-size:14px;
+    cursor:pointer; transition:opacity .15s,transform .1s; white-space:nowrap;
+  }
+  .search-box button:hover { opacity:.88; }
+  .search-box button:active { transform:scale(.97); }
+  .search-box button:disabled { opacity:.4; cursor:not-allowed; }
+  .status { color:var(--text2); font-size:13px; margin-bottom:20px; min-height:20px; text-align:center; max-width:580px; }
+  .status.error { color:var(--red); }
+  .card {
+    width:100%; max-width:640px; background:var(--surface);
+    border:1px solid var(--border); border-radius:16px;
+    overflow:hidden; display:none; animation:cardIn .35s ease;
+  }
+  @keyframes cardIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .card-header {
+    padding:20px 24px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .badge {
+    font-family:var(--mono); font-size:12px; font-weight:600;
+    padding:5px 12px; border-radius:8px; letter-spacing:.3px;
+  }
+  .badge-44 { background:var(--accent-dim); color:var(--accent); }
+  .badge-223 { background:var(--orange-dim); color:var(--orange); }
+  .badge-smp { background:var(--green-dim); color:var(--green); }
+  .purchase-num { font-family:var(--mono); font-size:15px; font-weight:600; }
+  .card-title {
+    padding:16px 24px; font-size:14px; color:var(--text2);
+    line-height:1.55; border-bottom:1px solid var(--border);
+  }
+  .fields { display:grid; grid-template-columns:1fr 1fr; }
+  .field { padding:16px 24px; border-bottom:1px solid var(--border); border-right:1px solid var(--border); }
+  .field:nth-child(2n) { border-right:none; }
+  .field:nth-last-child(-n+2) { border-bottom:none; }
+  .field-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+  .field-value { font-family:var(--mono); font-size:18px; font-weight:600; min-height:27px; }
+  .field-value.empty { color:var(--text3); font-size:13px; font-weight:400; }
+  .field-value .cur { font-size:13px; font-weight:400; color:var(--text2); margin-left:4px; }
+  .card-footer {
+    padding:14px 24px; border-top:1px solid var(--border);
+    background:var(--surface2); display:flex; gap:16px; flex-wrap:wrap;
+  }
+  .card-footer a { font-size:12px; color:var(--accent); text-decoration:none; font-weight:600; }
+  .card-footer a:hover { text-decoration:underline; }
+  .spinner {
+    display:inline-block; width:14px; height:14px;
+    border:2px solid var(--text3); border-top-color:var(--accent);
+    border-radius:50%; animation:spin .6s linear infinite;
+    vertical-align:middle; margin-right:6px;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  details.raw { margin-top:16px; width:100%; max-width:640px; }
+  details.raw summary { cursor:pointer; color:var(--text3); font-size:12px; font-family:var(--mono); }
+  .raw-json {
+    background:var(--surface); border:1px solid var(--border); border-radius:8px;
+    padding:12px; margin-top:8px; font-family:var(--mono); font-size:11px;
+    color:var(--text2); max-height:300px; overflow:auto; white-space:pre-wrap; word-break:break-all;
+  }
+  @media(max-width:500px) {
+    .fields{grid-template-columns:1fr}
+    .field{border-right:none!important}
+    .field:last-child{border-bottom:none}
+    .field-value{font-size:16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Карточка закупки</h1>
+  <p>ГосПлан API v2 · 44-ФЗ / 223-ФЗ</p>
+</div>
+
+<div class="search-box">
+  <input id="inp" type="text" placeholder="Номер закупки" autofocus>
+  <button id="btn" onclick="search()">Найти</button>
+</div>
+<div class="status" id="status"></div>
+
+<div class="card" id="card">
+  <div class="card-header" id="cardHeader"></div>
+  <div class="card-title" id="cardTitle"></div>
+  <div class="fields" id="fields"></div>
+  <div class="card-footer" id="cardFooter"></div>
+</div>
+<details class="raw" id="rawWrap" style="display:none">
+  <summary>JSON-ответы API</summary>
+  <div class="raw-json" id="rawJson"></div>
+</details>
+
+<script>
+const API = 'https://v2.gosplan.info';
+
+/* ── CORS proxy wrapper ─────────────────────────────────── */
+const PROXY = url => 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+
+async function apiFetch(path) {
+  const target = API + path;
+  const res = await fetch(PROXY(target));
+  if (!res.ok) throw new Error(res.status);
+  const wrap = await res.json();          // allorigins wraps in {contents, status}
+  if (!wrap.contents) return null;
+  const data = JSON.parse(wrap.contents);
+  return data;
+}
+
+/* ── helpers ─────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+const inp = $('inp'), btn = $('btn'), card = $('card');
+inp.addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+
+function setStatus(h, err) { const el = $('status'); el.innerHTML = h; el.className = 'status' + (err ? ' error' : ''); }
+function fmt(n) { return n == null ? null : Number(n).toLocaleString('ru-RU', { maximumFractionDigits: 2 }); }
+
+/* ── main search ─────────────────────────────────────────── */
+async function search() {
+  const num = inp.value.trim();
+  if (!num) return;
+  card.style.display = 'none';
+  $('rawWrap').style.display = 'none';
+  btn.disabled = true;
+  setStatus('<span class="spinner"></span> Ищем закупку…');
+
+  const raw = {};
+  try {
+    let data = null, fz = null;
+
+    // 44-ФЗ
+    const r44 = await apiFetch('/fz44/purchases?purchase_number=' + encodeURIComponent(num) + '&limit=1');
+    raw['fz44/purchases'] = r44;
+    if (r44 && r44.length) { data = r44[0]; fz = '44'; }
+
+    // 223-ФЗ
+    if (!data) {
+      const r223 = await apiFetch('/fz223/purchases?purchase_number=' + encodeURIComponent(num) + '&limit=1');
+      raw['fz223/purchases'] = r223;
+      if (r223 && r223.length) { data = r223[0]; fz = '223'; }
+    }
+
+    if (!data) {
+      setStatus('Закупка не найдена. Проверьте номер (данные ЕИС с 01.01.2024).', true);
+      btn.disabled = false;
+      return;
+    }
+
+    let winnerPrice = null, advancePart = null;
+
+    // procedures + contracts (44-ФЗ)
+    if (fz === '44') {
+      try {
+        const procs = await apiFetch('/fz44/procedures?purchase_number=' + encodeURIComponent(num) + '&limit=5');
+        raw['fz44/procedures'] = procs;
+        if (procs) for (const p of procs) {
+          if (p.contract_price != null) winnerPrice = p.contract_price;
+          else if (p.price != null) winnerPrice = p.price;
+        }
+      } catch(_){}
+      try {
+        const conts = await apiFetch('/fz44/contracts?purchase_number=' + encodeURIComponent(num) + '&limit=5');
+        raw['fz44/contracts'] = conts;
+        if (conts && conts.length) {
+          const c = conts[0];
+          if (c.price != null && winnerPrice == null) winnerPrice = c.price;
+          scanAdvance(c, v => { if (advancePart == null) advancePart = v; });
+        }
+      } catch(_){}
+    }
+
+    // contracts (223-ФЗ)
+    if (fz === '223') {
+      try {
+        const c223 = await apiFetch('/fz223/contracts?purchase_number=' + encodeURIComponent(num) + '&limit=5');
+        raw['fz223/contracts'] = c223;
+        if (c223 && c223.length) {
+          const c = c223[0];
+          if (c.price != null) winnerPrice = c.price;
+          scanAdvance(c, v => { if (advancePart == null) advancePart = v; });
+        }
+      } catch(_){}
+    }
+
+    // SMP detection
+    let isSMP = false;
+    const pt = (data.purchase_type || '').toLowerCase();
+    const sp = String(data.special_purchase_type || data.special_type || '').toLowerCase();
+    if ([pt, sp].some(s => s.includes('smb') || s.includes('smp'))) isSMP = true;
+    if (data.is_smp || data.smp || data.small_business || data.preferences_smp) isSMP = true;
+
+    renderCard({
+      fz, num: data.purchase_number,
+      title: data.object_info || '—',
+      nmck: data.max_price, winnerPrice,
+      oikPct: data.contract_guarantee_part,
+      oikAmt: data.contract_guarantee_amount,
+      advPct: advancePart, isSMP, stage: data.stage
+    });
+
+    $('rawJson').textContent = JSON.stringify(raw, null, 2);
+    $('rawWrap').style.display = 'block';
+    setStatus('');
+  } catch (err) {
+    setStatus('Ошибка: ' + err.message, true);
+  }
+  btn.disabled = false;
+}
+
+function scanAdvance(obj, cb) {
+  for (const k of Object.keys(obj)) {
+    const kl = k.toLowerCase();
+    if ((kl.includes('advanc') || kl.includes('avanc') || kl.includes('prepay')) && typeof obj[k] === 'number') cb(obj[k]);
+  }
+}
+
+function renderCard({ fz, num, title, nmck, winnerPrice, oikPct, oikAmt, advPct, isSMP, stage }) {
+  $('cardHeader').innerHTML =
+    `<span class="badge badge-${fz}">${fz}-ФЗ</span>` +
+    (isSMP ? '<span class="badge badge-smp">СМП</span>' : '') +
+    `<span class="purchase-num">№ ${num}</span>`;
+
+  $('cardTitle').textContent = title;
+
+  const f = [
+    ['НМЦК',            nmck != null ? fmt(nmck) + '<span class="cur">₽</span>' : null],
+    ['Цена победителя', winnerPrice != null ? fmt(winnerPrice) + '<span class="cur">₽</span>' : null],
+    ['% ОИК',           oikPct != null ? fmt(oikPct) + '%' : null],
+    ['Сумма ОИК',       oikAmt != null ? fmt(oikAmt) + '<span class="cur">₽</span>' : null],
+    ['% Аванса',        advPct != null ? fmt(advPct) + '%' : null],
+    ['Этап',            stageLabel(stage)],
+  ];
+
+  $('fields').innerHTML = f.map(([l, v]) =>
+    `<div class="field"><div class="field-label">${l}</div><div class="field-value ${v == null ? 'empty' : ''}">${v ?? '—'}</div></div>`
+  ).join('');
+
+  $('cardFooter').innerHTML =
+    `<a href="https://zakupki.gov.ru/epz/order/notice/ea20/view/common-info.html?regNumber=${num}" target="_blank">ЕИС ↗</a>` +
+    `<a href="https://swagger.gosplan.info/?urls.primaryName=${fz === '44' ? '44-ФЗ' : '223-ФЗ'}" target="_blank">Swagger ↗</a>`;
+
+  card.style.display = 'block';
+}
+
+function stageLabel(s) {
+  if (s == null) return null;
+  return { 1: 'Подача заявок', 2: 'Работа комиссии', 3: 'Завершена', 4: 'Отменена' }[s] || 'Этап ' + s;
+}
+</script>
+</body>
+</html>
