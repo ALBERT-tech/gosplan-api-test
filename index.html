@@ -141,15 +141,13 @@
 const API = 'https://v2.gosplan.info';
 
 /* ── CORS proxy wrapper ─────────────────────────────────── */
-const PROXY = url => 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+const PROXY = url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url);
 
 async function apiFetch(path) {
   const target = API + path;
   const res = await fetch(PROXY(target));
   if (!res.ok) throw new Error(res.status);
-  const wrap = await res.json();          // allorigins wraps in {contents, status}
-  if (!wrap.contents) return null;
-  const data = JSON.parse(wrap.contents);
+  const data = await res.json();          // codetabs returns raw JSON
   return data;
 }
 
