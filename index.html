@@ -138,17 +138,11 @@
 </details>
 
 <script>
-const API = 'https://v2.gosplan.info';
-
-/* ── CORS proxy wrapper ─────────────────────────────────── */
-const PROXY = url => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url);
-
+/* ── API через свой серверный прокси (Vercel) ──────────── */
 async function apiFetch(path) {
-  const target = API + path;
-  const res = await fetch(PROXY(target));
+  const res = await fetch('/api/proxy?path=' + encodeURIComponent(path));
   if (!res.ok) throw new Error(res.status);
-  const data = await res.json();          // codetabs returns raw JSON
-  return data;
+  return await res.json();
 }
 
 /* ── helpers ─────────────────────────────────────────────── */
