@@ -141,7 +141,7 @@
 const API = 'https://v2.gosplan.info';
 
 /* ── CORS proxy wrapper ─────────────────────────────────── */
-const PROXY = url => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url);
+const PROXY = url => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(url);
 
 async function apiFetch(path) {
   const target = API + path;
